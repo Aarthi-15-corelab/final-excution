@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Student Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 90%;
+            padding: 10px 15px;
+            border: solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #a777e3;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #6e8efb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #5c7cfa;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-logout {
+            background: #ff6b6b;
+        }
+
+        .btn-logout:hover {
+            background: #ff5252;
+        }
+
+        .btn-register {
+            background: #20bf6b;
+        }
+
+        .btn-register:hover {
+            background: #1dad60;
+        }
+
+        #statusMessage {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>
+                    <i class="fas fa-user-graduate"></i> Student Portal
+                </h1>
+            </div>
+            <div class="card-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="roll_number">Roll Number</label>
+                        <input type="text" class="form-control" id="roll_number" name="roll_number" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn" id="checkButton">
+                            <i class="fas fa-search"></i> Check Status
+                        </button>
+                        <button type="button" class="btn hidden" id="loginButton">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                        <button type="button" class="btn btn-logout hidden" id="logoutButton">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                        <button type="button" class="btn btn-register hidden" id="registerButton">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                    </div>
+                    <p id="statusMessage"></p>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        async function checkStudent() {
+            const roll_number = document.getElementById("roll_number").value;
+    
+            if (!roll_number) {
+                alert("Please enter your roll number.");
+                return;
+            }
+    
+            try {
+                const response = await fetch('http://172.17.149.77:3005/check_student', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ roll_number: roll_number })
+                });
+    
+                const data = await response.json();
+                if (data.success) {
+                    if (data.needsLogout) {
+                        showButton("logoutButton");
+                        setStatusMessage("You are currently logged in. Please logout when you're done.");
+                    } else if (data.canLogin) {
+                        showButton("loginButton");
+                        setStatusMessage("You can login now.");
+                    }
+                } else {
+                    showButton("registerButton");
+                    setStatusMessage("Student not found. Please register.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Error checking student status. Please try again.");
+            }
+        }
+    
+        async function loginStudent() {
+            const roll_number = document.getElementById("roll_number").value;
+    
+            if (!roll_number) {
+                alert("Please enter your roll number.");
+                return;
+            }
+    
+            try {
+                const response = await fetch('http://172.17.149.77:3005/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ roll_number: roll_number })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showButton("logoutButton");
+                    setStatusMessage("Login successful! Don't forget to logout when you're done.");
+                } else {
+                    alert("Login failed. Please try again.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Error logging in. Please try again.");
+            }
+        }
+    
+        async function logoutStudent() {
+            const roll_number = document.getElementById("roll_number").value;
+    
+            if (!roll_number) {
+                alert("Please enter your roll number.");
+                return;
+            }
+    
+            try {
+                const response = await fetch('http://172.17.149.77:3005/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ roll_number: roll_number })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showButton("loginButton");
+                    setStatusMessage("Logout successful! You can login again if needed.");
+                } else {
+                    alert("Logout failed. Please try again.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Error logging out. Please try again.");
+            }
+        }
+    
+        function showButton(buttonId) {
+
+            document.getElementById("loginButton").style.display = "none";
+            document.getElementById("logoutButton").style.display = "none";
+            document.getElementById("registerButton").style.display = "none";
+            document.getElementById(buttonId).style.display = "block";
+
+            }
+
+        function setStatusMessage(message) {
+            document.getElementById("statusMessage").textContent = message;
+        }
+    
+        document.getElementById('checkButton').addEventListener('click', checkStudent);
+        document.getElementById('loginButton').addEventListener('click', loginStudent);
+        document.getElementById('logoutButton').addEventListener('click', logoutStudent);
+        document.getElementById('registerButton').addEventListener('click', () => {
+            window.location.href = "Registration.html";
+        });
+    </script>
+</body>
+</html>
